@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Pac-Man — arcade reconstruction</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="frame">
+        <canvas id="screen" width="224" height="288" aria-label="Pac-Man game screen"></canvas>
+      </div>
+      <div id="controls">
+        <span><b>Arrows/WASD</b> move</span>
+        <span><b>Enter/Space</b> start</span>
+        <span class="no-arcade"><b>P</b> pause</span>
+        <span><b>M</b> mute</span>
+        <span class="no-arcade"><b>R</b> restart</span>
+        <span class="no-arcade"><b>`</b> debug</span>
+        <span><b>Gamepad</b> d-pad / Start</span>
+      </div>
+      <div id="replay-bar">
+        <button id="btn-pause" class="no-arcade" type="button">Pause</button>
+        <button id="btn-mute" type="button" aria-pressed="false">Mute</button>
+        <button id="btn-restart" class="no-arcade" type="button">Restart</button>
+        <button id="btn-debug" class="no-arcade" type="button" aria-pressed="false">Debug</button>
+        <button id="save-replay" type="button">Save replay</button>
+        <label class="file-button">Load replay<input id="load-replay" type="file" accept=".json,application/json" /></label>
+        <span id="status" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

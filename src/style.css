@@ -1,0 +1,116 @@
+:root {
+  color-scheme: dark;
+  --bg: #000;
+  --fg: #d8d8d8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow: hidden;
+}
+
+#app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+#frame {
+  position: relative;
+  line-height: 0;
+  background: #000;
+  box-shadow: 0 0 0 1px #1b1b2a;
+}
+
+#screen {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #000;
+  touch-action: none;
+}
+
+#controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  max-width: 720px;
+  padding: 0 8px;
+  color: #8a8a9a;
+  font-size: 11px;
+  line-height: 1.5;
+  user-select: none;
+}
+
+#controls b {
+  color: #cfcfe0;
+  font-weight: 600;
+}
+
+body.arcade .no-arcade {
+  display: none;
+}
+
+#replay-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  max-width: 720px;
+  padding: 0 8px;
+  font-size: 11px;
+  color: #8a8a9a;
+}
+
+#replay-bar button,
+#replay-bar .file-button {
+  font: inherit;
+  color: #cfcfe0;
+  background: #14141f;
+  border: 1px solid #2b2b40;
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+#replay-bar button:hover,
+#replay-bar .file-button:hover,
+#replay-bar button:focus-visible,
+#replay-bar .file-button:focus-within {
+  border-color: #5a5a80;
+  outline: none;
+}
+
+#replay-bar input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#status {
+  min-height: 1.5em;
+}
+
+@media (max-width: 560px) {
+  #controls {
+    font-size: 10px;
+    gap: 6px;
+  }
+}

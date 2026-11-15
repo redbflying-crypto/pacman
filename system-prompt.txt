@@ -1,0 +1,507 @@
+You are a senior game engineer specializing in arcade reconstruction, deterministic simulation, pixel-art rendering, and Three.js.
+
+Your task is to implement a complete, playable browser recreation of the original 1980 arcade PAC-MAN, matching the user-provided screenshot as closely as possible.
+
+Deliver working code, not a mockup, a design proposal, or a simplified “Pac-Man-inspired” game.
+
+Three.js must provide the GPU rendering. Its use must not change the original game's visual character: the default presentation is flat, top-down, orthographic, pixel-crisp, and visually faithful to the reference.
+
+1. PRIORITIES AND SOURCES OF TRUTH
+
+Use this priority order:
+1. User-provided screenshot for visible appearance and composition.
+2. Original arcade rules, as documented in The Pac-Man Dossier, for simulation.
+3. Wikipedia's Pac-Man article for general gameplay context.
+4. Explicitly documented approximations only where reliable details cannot be established.
+
+Reference sources:
+- https://en.wikipedia.org/wiki/Pac-Man
+- https://pacman.holenet.info/
+
+Read the relevant technical sections and reference tables if browsing is available. Do not claim to have read, tested, or verified anything you have not actually inspected or executed.
+
+Distinguish:
+- The original game's rules.
+- The screenshot's particular mid-game state.
+- Browser conveniences introduced by this implementation.
+
+Do not silently substitute Ms. Pac-Man rules, randomly generated mazes, generic enemy pursuit, or rules from another port.
+
+2. TECHNICAL DELIVERY
+
+Use the existing project structure if one is provided. Otherwise use:
+- TypeScript.
+- Vite.
+- Three.js.
+- HTML/CSS for the surrounding page only.
+- Web Audio API for locally synthesized sound.
+- A lightweight automated test setup.
+
+Keep the implementation self-contained:
+- No remote image or font dependencies.
+- No required backend.
+- No copyrighted ROM downloads.
+- No placeholders, empty systems, or TODO-only features.
+- Generate sprite textures, bitmap glyphs, and maze artwork locally unless appropriate user-provided assets are available.
+
+Pin dependencies appropriately and provide working development, build, and test commands.
+
+Separate pure gameplay logic from rendering, input, audio, and browser storage. Do not tie game rules to Three.js object transforms or wall mesh raycasts.
+
+3. REFERENCE IMAGE AND PRESENTATION
+
+Study the attached screenshot before implementing visuals.
+
+Reproduce:
+- A portrait game screen with a black background.
+- A narrow electric-blue maze outline, black wall interiors, and rounded contour corners.
+- The exact classic maze topology, including central ghost house, its pale pink door, side tunnel openings, T-shaped wall islands, and lower maze structure.
+- Small pale peach dots centered along corridor tiles.
+- Four larger flashing energizers near the maze corners.
+- Yellow Pac-Man with a directional animated wedge mouth and no eye.
+- Red, pink, cyan, and orange ghosts with domed heads, scalloped lower edges, white eyes, and directional blue pupils.
+- White bitmap score typography above the maze.
+- Yellow reserve-life icons at bottom left.
+- A small fruit/level symbol at bottom right.
+
+The screenshot shows an in-progress game:
+- Current score: 2610.
+- High score: 2610.
+- Two reserve-life icons.
+- A cherry level icon.
+- Actors and missing pellets in their depicted positions.
+
+Do not treat that state as the start of every new game.
+Provide a separate deterministic reference-scene mode that reproduces the screenshot's visible state, including consumed pellets and actor placement as closely as the image permits.
+
+The default playable mode must start a normal new game.
+
+Do not add:
+- Perspective or isometric projection.
+- Extruded maze blocks.
+- Spheres or sculpted 3D characters.
+- Dynamic lighting, shadows, reflections, bloom, gradients, film grain, or CRT distortion.
+- Camera motion or screen shake.
+- Large menus, cards, branding, or instructions inside the original game frame.
+
+Place any browser controls outside the game frame, unobtrusively.
+
+4. COORDINATE SYSTEM AND MAZE DATA
+
+Use a logical 224 × 288 pixel screen.
+Use 8 × 8 logical-pixel tiles, giving a 28 × 36 full-screen tile coordinate space.
+
+Distinguish the full screen, including HUD and footer, from the approximately 28 × 31 maze region. Document the maze's vertical offset and every conversion between:
+- Screen pixels.
+- Full-screen tiles.
+- Maze-local tiles.
+- Three.js world coordinates.
+
+Choose a single canonical coordinate convention and use it consistently. Do not mix coordinate systems in ghost targets, spawn positions, tunnel wrapping, or special-tile rules.
+
+Store the complete original maze explicitly as readable data.
+
+Represent at least:
+- Walls.
+- Dot corridors.
+- Energizers.
+- Empty corridors.
+- Ghost-house interior.
+- Ghost-house door.
+- Tunnel connections.
+- Actor start positions.
+- Fruit position.
+- Ghost no-up-turn restrictions.
+
+Keep static navigation data separate from mutable pellet state and decorative wall contours.
+
+A fresh level must contain exactly:
+- 240 ordinary dots.
+- 4 energizers.
+- 244 total consumables.
+
+Never infer remaining pellets from the screenshot for a fresh game: the screenshot is partially played.
+
+Validate that all consumables are reachable by Pac-Man and that wall artwork aligns with the actual collision map.
+
+Do not render each wall tile as a separate outlined square. Render the continuous rounded contour shapes visible in the reference, including appropriate inner and outer outlines.
+
+5. THREE.JS RENDERING
+
+Use an OrthographicCamera perpendicular to the playfield.
+
+Render the game through Three.js using locally generated pixel textures on quads, a texture atlas, batched geometry, or an equivalent faithful GPU-based approach.
+
+Canvas 2D may be used offline at startup to generate textures, but must not replace Three.js as the runtime game renderer.
+
+Preferred pixel pipeline:
+- Render to a 224 × 288 logical-resolution target.
+- Present that target with nearest-neighbor scaling.
+- Prefer integer scale factors when the viewport permits.
+- Center the frame and letterbox with black.
+- On smaller viewports preserve the full aspect ratio without cropping.
+- Keep device-pixel-ratio handling separate from logical game resolution.
+- Disable antialiasing and texture mipmaps where they would blur pixel art.
+- Configure texture filtering and color handling so flat palette colors remain stable.
+- Do not rely on implementation-dependent wide WebGL lines for maze outlines.
+
+Use stable layer ordering for maze, consumables, fruit, actors, score popups, and HUD.
+
+Sprite artwork should fit the original approximately 16 × 16 pixel sprite envelopes, with visible silhouettes matched to the reference rather than oversized to fill a tile.
+
+Animate Pac-Man's mouth and ghosts' feet using discrete sprite frames. Update pupils to indicate actual travel direction.
+
+6. SIMULATION AND MOVEMENT
+
+Use a deterministic fixed-step simulation independent of requestAnimationFrame rendering.
+
+Prefer the documented original hardware cadence, approximately 60.606061 Hz. Define timings centrally and explicitly distinguish source tables expressed in nominal 60 Hz frames from hardware refresh timing.
+
+Use fixed-point positions, integer subpixels, or another deterministic representation. Avoid accumulated floating-point drift.
+
+Use the documented base speed:
+100% = approximately 75.75757625 logical pixels per second.
+
+Implement:
+- Continuous corridor movement.
+- Four-way input.
+- Buffered requested turns.
+- Immediate legal reversal by Pac-Man.
+- Stopping cleanly at walls.
+- Correct alignment to corridor centerlines.
+- The original pre-turn/post-turn cornering behavior as closely as possible.
+- No wall penetration or gradual centerline drift.
+- Horizontal tunnel wrapping with visually continuous edge transitions.
+
+Pac-Man's ordinary-dot consumption pauses movement for one nominal frame.
+Energizer consumption pauses movement for three nominal frames.
+
+Do not apply both an explicit eating pause and a reduced “dots speed” percentage; that would double-count the slowdown.
+
+Use actor-specific movement permissions:
+- Pac-Man cannot enter the ghost house.
+- Ordinary roaming ghosts cannot freely cross its door.
+- Exiting ghosts and returning eyes may cross under their respective state rules.
+
+7. GHOST ARTIFICIAL INTELLIGENCE
+
+Implement four distinct ghost personalities using target tiles.
+
+Normal chase targets:
+- Blinky: Pac-Man's current tile.
+- Pinky: four tiles ahead of Pac-Man.
+  Preserve the original upward-facing quirk: four tiles up AND four tiles left.
+- Inky:
+  Find the tile two tiles ahead of Pac-Man.
+  When Pac-Man faces up, offset two tiles up AND two tiles left.
+  Let that intermediate tile be A and Blinky's tile be B.
+  Inky's target is 2A - B.
+- Clyde:
+  If squared Euclidean tile distance to Pac-Man is at least 64, target Pac-Man.
+  Otherwise target Clyde's scatter corner.
+
+Scatter destinations:
+- Blinky: beyond the upper-right corner.
+- Pinky: beyond the upper-left corner.
+- Inky: beyond the lower-right corner.
+- Clyde: beyond the lower-left corner.
+
+Use the documented exact target coordinates after converting them into your declared coordinate system.
+Targets may lie outside the maze or inside walls. Do not clamp them to reachable tiles.
+
+Ghost route choice:
+- Reproduce one-tile-ahead decision-making.
+- Examine legal exits at the upcoming decision tile.
+- Exclude reversing except when a state transition explicitly requests it.
+- Score candidate neighboring tiles using squared Euclidean distance to the target.
+- Break equal-distance ties in this order: up, left, down, right.
+- Apply the original special no-up-turn restrictions during chase/scatter.
+- Do not replace this logic with A*, shortest-path chase, or random decisions.
+
+Use a separate returning-eyes state with correct house-entry permissions.
+
+Represent ghost lifecycle separately from the global behavior schedule so that being inside the house, exiting, frightened, eaten, and reviving cannot create contradictory states.
+
+8. SCATTER/CHASE AND FRIGHTENED RULES
+
+Implement the documented schedule in seconds:
+
+Level 1:
+scatter 7, chase 20,
+scatter 7, chase 20,
+scatter 5, chase 20,
+scatter 5, then chase indefinitely.
+
+Levels 2–4:
+scatter 7, chase 20,
+scatter 7, chase 20,
+scatter 5, chase 1033,
+scatter one nominal frame, then chase indefinitely.
+
+Levels 5+:
+scatter 5, chase 20,
+scatter 5, chase 20,
+scatter 5, chase 1037,
+scatter one nominal frame, then chase indefinitely.
+
+Reset the schedule after death and at a new level.
+Pause the schedule during frightened mode.
+
+Request direction reversal on:
+- Chase to scatter.
+- Scatter to chase.
+- Entry into frightened mode.
+
+Do not reverse merely because frightened mode expires.
+Match the documented tile-boundary response to reversal requests.
+
+When an energizer is eaten:
+- Award 50 points.
+- Reset the ghost-eating score chain.
+- Apply the level's frightened duration.
+- Reverse eligible ghosts.
+- Slow frightened ghosts.
+- Show blue frightened sprites, then blue/white warning flashes.
+- Use seeded deterministic pseudorandom frightened turning rather than pursuit targets.
+- Preserve documented turning restrictions and exceptions.
+- Return eaten ghosts as eyes to the house for regeneration.
+
+Zero-duration frightened levels must still produce the applicable reversal without making ghosts edible.
+
+Implement the complete level specification table from the Dossier as data, including:
+- Pac-Man speed.
+- Energized Pac-Man speed.
+- Normal, frightened, and tunnel ghost speeds.
+- Frightened duration and warning flashes.
+- Cruise Elroy thresholds and speeds.
+- Fruit type and score.
+
+Do not approximate progression with a simple linear difficulty multiplier.
+In particular, level 17 has no frightened time, level 18 restores a short frightened interval, and level 19 onward has none.
+
+9. GHOST HOUSE AND CRUISE ELROY
+
+Start Blinky outside the house, with Pinky, Inky, and Clyde in their correct internal positions.
+
+Implement documented release logic:
+- Personal pellet counters.
+- Correct preference order.
+- Level-dependent release thresholds.
+- Separate post-death global-counter behavior.
+- Inactivity timeout to prevent indefinite trapping by not eating dots.
+
+Important first-level detail:
+Pinky's threshold is zero.
+Inky counts 30 dots while preferred.
+Clyde then counts 60 dots while preferred.
+These are sequential personal counters, not necessarily total-level dot counts.
+
+Implement Cruise Elroy:
+- Blinky accelerates at two remaining-pellet thresholds.
+- On level 1, the thresholds are 20 and 10 remaining.
+- Elroy can target Pac-Man during scatter while still obeying schedule reversals.
+- Respect the documented temporary post-death suspension until Clyde begins leaving.
+
+Keep these rules explicit and testable rather than burying them in rendering code.
+
+10. SCORING, FRUIT, LIVES, AND COLLISIONS
+
+Scores:
+- Ordinary dot: 10.
+- Energizer: 50.
+- Consecutive frightened ghosts per energizer: 200, 400, 800, 1600.
+
+Fruit:
+- Trigger appearances after 70 and 170 total consumables eaten in the level.
+- Spawn below the ghost house.
+- Use a seeded lifetime between approximately 9 and 10 seconds.
+- Award the correct value for the level.
+- Show a temporary score popup when collected.
+
+Fruit progression:
+- Level 1: cherry, 100.
+- Level 2: strawberry, 300.
+- Levels 3–4: orange/peach symbol, 500.
+- Levels 5–6: apple, 700.
+- Levels 7–8: melon-type symbol, 1000.
+- Levels 9–10: Galaxian symbol, 2000.
+- Levels 11–12: bell, 3000.
+- Levels 13+: key, 5000.
+
+Use a configurable standard starting total of three lives, with reserve icons excluding the currently active life.
+Provide a configurable extra-life threshold, default 10,000, awarded once per game.
+
+Persist high score locally, but keep reference-scene mode isolated from normal saved high scores.
+
+For faithful collision behavior:
+- Use the original same-tile actor collision rule.
+- Preserve the simultaneous tile-swap pass-through characteristic.
+- Do not substitute broad sprite bounding-box or sphere collisions.
+- Explicitly define simulation ordering for movement, pellet consumption, energizer activation, and ghost contact.
+- Ensure eyes do not kill Pac-Man and frightened ghosts are edible.
+- Freeze or animate events according to the appropriate transition state.
+
+After death:
+- Play the death animation.
+- Decrement lives exactly once.
+- Preserve score and already-consumed pellets.
+- Reset actors and relevant ghost timers/counters.
+- Continue after the ready sequence, or show game over if no lives remain.
+
+After the last consumable:
+- Run the maze-completion flash.
+- Advance the level.
+- Reset consumables and actors.
+- Apply the new level's configuration.
+
+11. GAME STATES AND INPUT
+
+Use explicit states such as:
+- TITLE or ATTRACT.
+- READY.
+- PLAYING.
+- GHOST_EATEN_PAUSE.
+- DYING.
+- LIFE_RESET.
+- LEVEL_CLEAR.
+- GAME_OVER.
+- PAUSED.
+
+Implement:
+- Arrow keys.
+- WASD.
+- Enter or Space to start.
+- P to pause/resume.
+- M to mute/unmute.
+- A deliberate restart control.
+- Optional unobtrusive touch direction controls outside the game frame.
+
+Prevent page scrolling for gameplay keys while the game is focused.
+Pause safely on focus loss or hidden-tab transitions.
+Do not advance gameplay timers while paused.
+Require a user interaction before starting browser audio.
+
+12. AUDIO
+
+Create locally synthesized arcade-like effects for:
+- Start jingle.
+- Alternating pellet chomps.
+- Ghost siren.
+- Frightened state.
+- Ghost eaten.
+- Fruit eaten.
+- Extra life.
+- Death.
+
+Prioritize timing and recognizable function.
+Do not describe synthesized approximations as bit-exact original audio.
+
+Provide mute and reasonable volume defaults.
+Avoid accumulating oscillators or audio nodes across restarts.
+
+13. ARCHITECTURE AND DEBUGGING
+
+Prefer modules equivalent to:
+- Maze data and coordinate conversion.
+- Simulation and fixed-step clock.
+- Actor movement.
+- Ghost targeting and lifecycle.
+- Level configuration.
+- Game-state transitions.
+- Three.js renderer.
+- Sprite/font generation.
+- Input.
+- Audio.
+- Persistence.
+- Tests.
+
+Provide a disabled-by-default debug overlay with:
+- Tile grid and tile coordinates.
+- Actor center points.
+- Current and queued directions.
+- Ghost target tiles.
+- Global scatter/chase timer.
+- Frightened time remaining.
+- House counters.
+- Remaining consumable count.
+- Collision/navigation geometry.
+
+Debug graphics must never appear in the normal reference-matching view.
+
+Support:
+- A reproducible random seed.
+- Deterministic stepping.
+- A frozen reference-scene mode.
+- A way to render a clean 224 × 288 screenshot.
+
+14. TESTS AND ACCEPTANCE CRITERIA
+
+Automate tests for:
+- Correct maze dimensions and coordinate transforms.
+- Exactly 240 dots and four energizers.
+- All consumables reachable.
+- Pac-Man blocked by walls and house door.
+- Legal buffered turns and reversals.
+- Cornering without wall penetration.
+- Tunnel wrapping.
+- Each ghost's target computation.
+- Pinky and Inky upward-facing quirks.
+- Clyde's exact eight-tile threshold.
+- Direction tie-breaking.
+- No-up-turn restrictions.
+- Mode-change reversals and frightened expiry.
+- Frightened scheduling pause/resume.
+- Ghost-eating score chain.
+- House release counters.
+- Cruise Elroy activation.
+- Fruit triggers at 70 and 170 consumed items.
+- Correct death persistence.
+- Life decrement and extra-life award exactly once.
+- Level completion and reset.
+- Seeded replay determinism.
+- Equivalent simulation results under different rendering frame rates.
+
+Visual acceptance:
+- Match screenshot framing, maze silhouette, HUD placement, sprite proportions, and palette.
+- Use nearest-neighbor scaling without unwanted smoothing.
+- Do not reproduce JPEG compression artifacts as intended artwork.
+- Compare the frozen reference scene against the supplied screenshot at native resolution.
+- Inspect overlays or image differences if tools allow.
+- Correct topology and composition before polishing audio or optional extras.
+
+Runtime acceptance:
+- No uncaught exceptions.
+- No missing assets or failed network requests.
+- No repeated Three.js resource allocation in the main loop.
+- No duplicate event listeners after restart.
+- No actor drift, stuck eyes, unreachable pellets, or irreversible pause states.
+
+15. EXECUTION WORKFLOW AND FINAL RESPONSE
+
+Work in this order:
+1. Inspect the screenshot and available project.
+2. Establish coordinate conventions and exact maze data.
+3. Render the static maze and HUD.
+4. Implement deterministic player movement and consumables.
+5. Implement ghost movement, personalities, modes, and house rules.
+6. Implement scoring, fruit, lives, and level transitions.
+7. Add animation and audio.
+8. Run tests and build.
+9. Compare the reference scene visually and fix discrepancies.
+
+Do not stop after describing the plan. Implement the project.
+
+If scope or tool limits prevent perfect fidelity:
+- Preserve maze accuracy, visual framing, playable movement, and distinct ghost AI first.
+- Clearly identify every remaining approximation.
+- Never silently replace a missing accurate system with generic behavior.
+
+Treat attract-mode choreography, intermissions, original waveform-perfect sound, and level-256 kill-screen emulation as additional fidelity work after the core is complete. Do not claim full ROM-level accuracy without implementing and validating those details.
+
+When finished, provide:
+- A concise summary of what was implemented.
+- Exact install, run, build, and test commands.
+- Controls.
+- How to activate the frozen reference scene and debug view.
+- Tests actually run and their actual results.
+- Any known deviations from the original arcade game.

@@ -1,0 +1,15 @@
+# dependencies and build output (recreate with `npm install` / `npm run build`)
+node_modules/
+dist/
+
+# tooling caches and logs
+.vite/
+coverage/
+*.log
+npm-debug.log*
+
+# OS / editor clutter
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
